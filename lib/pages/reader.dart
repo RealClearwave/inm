@@ -40,7 +40,20 @@ class _ReaderPageState extends State<ReaderPage> {
     setState(() {
       _currentPage = _pageController.page!.round() + 1;  // 页码从 1 开始
     });
+
+    // 保存当前文件的最后阅读页数
+    if (_fileOpened) {
+      _saveLastReadPage(_currentPage);
+    }
   }
+
+  // 保存最后阅读的页码
+  Future<void> _saveLastReadPage(int page) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String key = 'last_read_page_${_recentFiles.last}'; // 根据文件路径生成键
+    await prefs.setInt(key, page);
+  }
+
 
   
   // 懒加载更多页面，每次加载50页
@@ -121,21 +134,64 @@ class _ReaderPageState extends State<ReaderPage> {
     if (await file.exists()) {
       String content = await file.readAsString(); // 读取文件内容
       List<String> splittedSentences = _parser.splitSentences(content);
-      //print('Read $splittedSentences Sentences from $filePath');
       _allPages = _parser.buildPages(splittedSentences);  // 分句
       _totalPages = _allPages.length;  // 计算总页数
-      //print('Total Pages: $_totalPages');
-      _loadMorePages();  // 加载第一页
+
+      // 加载第一页内容
+      _loadMorePages();
 
       setState(() {
         _fileOpened = true;  // 标记文件已打开
       });
-    } else {
-      //print('File Not Found : $filePath');
+
+      // 跳转到最后阅读页
+      await _jumpToLastReadPage(filePath);
+    }
+  }
+
+  Future<void> _jumpToLastReadPage(String filePath) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String key = 'last_read_page_$filePath';  // 根据文件路径生成键
+    int? lastReadPage = prefs.getInt(key);
+
+    if (lastReadPage != null && lastReadPage <= _totalPages) {
+      // 首先加载直到目标页的所有页面内容
+      await _loadPagesUntil(lastReadPage);
+
+      // 使用 WidgetsBinding 来确保页面构建完成后再跳转
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(lastReadPage - 1);  // 页码是从0开始的，所以需要 -1
+        }
+      });
+
+      // 提示用户已跳转到上次阅读的页码
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('已跳转到上次阅读的第 $lastReadPage 页'))
+      );
+    }
+  }
+
+  // 加载直到目标页的所有页面内容
+  Future<void> _loadPagesUntil(int targetPage) async {
+    while (_pages.length < targetPage) {
+      if (_pages.length >= _allPages.length) {
+        break;  // 已经加载了所有页面
+      }
+
+      // 加载下一批页面，假设每次加载 50 页
+      int nextPageEnd = (_pages.length + 50).clamp(0, _allPages.length);
+      List<List<String>> nextPages = _allPages.sublist(_pages.length, nextPageEnd);
+      List<List<List<FuriganaChar>>> parsedPages = await _parser.parsePages(nextPages);
+      _pages.addAll(parsedPages);
+
       setState(() {
+        _isLoading = false;  // 完成加载，隐藏加载动画
       });
     }
   }
+
+
 
   @override
   void dispose() {
@@ -146,13 +202,20 @@ class _ReaderPageState extends State<ReaderPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(child: 
-        _fileOpened
-          ? _buildPageView()  // 如果文件已打开，显示内容分页
-          : _buildRecentFilesList(),  // 否则显示最近打开的文件列表
+      body: SafeArea(
+        child: Stack(
+          children: [
+            _fileOpened
+              ? _buildPageView()  // 如果文件已打开，显示内容分页
+              : _buildRecentFilesList(),  // 否则显示最近打开的文件列表
+            if (_isLoading)
+              const Center(child: CircularProgressIndicator()),  // 显示加载动画
+          ],
+        ),
       ),
     );
   }
+
 
   // 构建分页内容
   Widget _buildPageView() {
