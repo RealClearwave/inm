@@ -1,0 +1,210 @@
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:inm/components/furigana.dart';
+import 'package:shared_preferences/shared_preferences.dart';  // 导入 SharedPreferences
+import '../components/inmview.dart';  // 导入 InmView 组件
+import '../modules/semantic.dart';  // 导入 SemanticParser
+
+class ReaderPage extends StatefulWidget {
+  const ReaderPage({super.key});
+
+  @override
+  _ReaderPageState createState() => _ReaderPageState();
+}
+
+class _ReaderPageState extends State<ReaderPage> {
+  final SemanticParser _parser = SemanticParser();
+  final List<List<List<FuriganaChar>>> _pages = [];  // 已加载并解析的页面内容，每页5句
+  List<List<String>> _allPages = [];  // 所有的分页数据
+  final PageController _pageController = PageController();
+  List<String> _recentFiles = []; // 最近打开的文件列表
+  int _currentPage = 1;  // 当前页数
+  int _totalPages = 1;  // 总页数
+  bool _fileOpened = false;  // 标记是否已打开文件
+  bool _isLoading = false;  // 是否正在加载新页面
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecentFiles();  // 加载最近打开的文件列表
+    _pageController.addListener(_onScroll);  // 监听滚动事件
+  }
+
+  // 滚动时加载更多页面
+  void _onScroll() {
+    if (_pageController.position.pixels == _pageController.position.maxScrollExtent && !_isLoading) {
+      _loadMorePages();  // 用户滚动到末尾，加载更多页面
+    }
+    // 更新当前页码
+    setState(() {
+      _currentPage = _pageController.page!.round() + 1;  // 页码从 1 开始
+    });
+  }
+
+  
+  // 懒加载更多页面，每次加载50页
+  Future<void> _loadMorePages() async {
+    if (_pages.length >= _allPages.length) return;  // 已经加载了全部内容
+
+    setState(() {
+      _isLoading = true;  // 开始加载，显示加载动画
+    });
+
+    // 加载下一个50页
+    int nextPageEnd = (_pages.length + 50).clamp(0, _allPages.length);
+    List<List<String>> nextPages = _allPages.sublist(_pages.length, nextPageEnd);
+    List<List<List<FuriganaChar>>> parsedPages = await _parser.parsePages(nextPages);
+    _pages.addAll(parsedPages);
+
+    setState(() {
+      _isLoading = false;  // 完成加载，隐藏加载动画
+    });
+
+    // 自动进入下一页
+    if (nextPageEnd != 50 && _pageController.hasClients) {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeIn,
+      );
+    }
+  }
+
+
+  // 选择文件并读取内容
+  Future<void> _pickFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['txt'], // 只允许选择文本文件
+    );
+    if (result != null) {
+      File file = File(result.files.single.path!);
+      _addToRecentFiles(file.path);  // 添加文件到最近打开列表
+      String content = await file.readAsString(); // 读取文件内容
+      List<String> splittedSentences = _parser.splitSentences(content);
+      //print('Read $splittedSentences Sentences');
+      _allPages = _parser.buildPages(splittedSentences);  // 分句
+      _totalPages = _allPages.length;  // 计算总页数
+      //print('Total Pages: $_totalPages');
+
+      setState(() {
+        _fileOpened = true;  // 标记文件已打开
+      });
+    } else {
+      //final filePath = result?.files.single.path;
+      //print('File Not Found : $filePath');
+      setState(() {
+      });
+    }
+  }
+
+  // 添加文件到最近打开文件列表，并保存到 SharedPreferences
+  Future<void> _addToRecentFiles(String filePath) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    _recentFiles.add(filePath);
+    _recentFiles = _recentFiles.toSet().toList();  // 去重
+    await prefs.setStringList('recentFiles', _recentFiles);
+    setState(() {});
+  }
+
+  // 加载最近打开的文件列表
+  Future<void> _loadRecentFiles() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _recentFiles = prefs.getStringList('recentFiles') ?? [];
+    });
+  }
+
+  // 打开最近打开的文件
+  Future<void> _openRecentFile(String filePath) async {
+    File file = File(filePath);
+    if (await file.exists()) {
+      String content = await file.readAsString(); // 读取文件内容
+      List<String> splittedSentences = _parser.splitSentences(content);
+      //print('Read $splittedSentences Sentences from $filePath');
+      _allPages = _parser.buildPages(splittedSentences);  // 分句
+      _totalPages = _allPages.length;  // 计算总页数
+      //print('Total Pages: $_totalPages');
+      _loadMorePages();  // 加载第一页
+
+      setState(() {
+        _fileOpened = true;  // 标记文件已打开
+      });
+    } else {
+      //print('File Not Found : $filePath');
+      setState(() {
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(child: 
+        _fileOpened
+          ? _buildPageView()  // 如果文件已打开，显示内容分页
+          : _buildRecentFilesList(),  // 否则显示最近打开的文件列表
+      ),
+    );
+  }
+
+  // 构建分页内容
+  Widget _buildPageView() {
+    return Stack(
+      children: [
+        PageView.builder(
+          controller: _pageController,
+          itemCount: _pages.length,
+          itemBuilder: (context, index) {
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: InmView(pageContent: _pages[index]), // 使用 InmView 显示每页内容
+            );
+          },
+        ),
+        if (!_isLoading)
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Text('第 $_currentPage 页 / 共 $_totalPages 页', style: const TextStyle(fontSize: 10), ),  // 加载动画
+            ),
+          ),
+        if (_isLoading)
+          const Center(
+            child: CircularProgressIndicator(),  // 加载动画
+          ),
+      ],
+    );
+  }
+
+  // 构建最近打开的文件列表
+  Widget _buildRecentFilesList() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        ElevatedButton(
+          onPressed: _pickFile,
+          child: Text('选择文件', style: TextStyle(color: Colors.pink.shade300)),
+        ),
+        const SizedBox(height: 20),
+        if (_recentFiles.isNotEmpty) ...[
+          const Text('最近打开的文件：'),
+          for (var file in _recentFiles)
+            ListTile(
+              title: Text(file),
+              onTap: () => _openRecentFile(file), // 点击快速打开文件
+            ),
+        ] else
+          const Text('没有最近打开的文件'),
+      ],
+    );
+  }
+}
