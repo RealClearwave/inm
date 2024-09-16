@@ -92,6 +92,7 @@ flutter:
   # see https://flutter.dev/to/font-from-package
   assets:
   - assets/fonts/NotoSerifJP-Regular.ttf
+  - assets/dict/
 
   fonts:
     - family: NotoSerifJP

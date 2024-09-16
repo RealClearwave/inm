@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:inm/pages/dictionary.dart';
 
 // FuriganaChar 类用于存储每个字符的信息
 class FuriganaChar {
@@ -32,7 +33,7 @@ String katakanaToHiragana(String katakana) {
   });
 }
 
-// 自定义的下划线小部件，显示为圆角矩形
+// 自定义的下划线小部件，支持点击事件跳转到辞书页面
 class UnderlineWidget extends StatelessWidget {
   final String kanji;
   final String? furigana;
@@ -51,46 +52,81 @@ class UnderlineWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (furigana != null && furigana != ' ')
-          Text(
-            furigana!,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.black,
-              fontFamily: 'NotoSerifJP',  // 使用 Noto Serif Japanese 字体
-            ),
-          ),
-        if (furigana == null || furigana == ' ')
-          const SizedBox(height: 12),  // 如果没有 Furigana，保持一定的行高
-        Stack(
-          children: [
+    return GestureDetector(
+      onTap: () {
+        _navigateToDictionary(context, kanji);  // 点击时跳转到辞书页面
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (furigana != null && furigana != ' ' && !['。', '、','！','*'].contains(furigana))
             Text(
-              kanji,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+              furigana!,
+              style: const TextStyle(
+                fontSize: 12,
                 color: Colors.black,
                 fontFamily: 'NotoSerifJP',  // 使用 Noto Serif Japanese 字体
               ),
             ),
-            if (underline)
-              Positioned(
-                bottom: 4,
-                child: Container(
-                  width: 20, 
-                  height: 4, 
-                  decoration: BoxDecoration(
-                    color: underlineColor.withOpacity(0.7), // 半透明的颜色
-                    borderRadius: BorderRadius.circular(2), // 圆角矩形
+          if (furigana == null || furigana == ' ' || ['。', '、','！','*'].contains(furigana))
+            const SizedBox(height: 12),  // 如果没有 Furigana，保持一定的行高
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final textPainter = TextPainter(
+                text: TextSpan(
+                  text: kanji,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+                    color: Colors.black,
+                    fontFamily: 'NotoSerifJP',
                   ),
                 ),
-              ),
-          ],
-        ),
-      ],
+                maxLines: 1,
+                textDirection: TextDirection.ltr,
+              );
+              textPainter.layout(minWidth: 0, maxWidth: constraints.maxWidth);
+              final double textWidth = textPainter.size.width;
+
+              return Stack(
+                children: [
+                  if (underline)
+                    Positioned(
+                      bottom: 3,
+                      child: Container(
+                        width: textWidth,  // 根据文字的宽度动态设置下划线的宽度
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: underlineColor.withOpacity(0.9), // 半透明的颜色
+                          borderRadius: BorderRadius.circular(2), // 圆角矩形
+                        ),
+                      ),
+                    ),
+                  Text(
+                    kanji,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+                      color: Colors.black,
+                      fontFamily: 'NotoSerifJP',
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 跳转到辞书页面并传递查询词汇
+  void _navigateToDictionary(BuildContext context, String query) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DictionaryPage(initialQuery: query),  // 传递查询词汇
+      ),
     );
   }
 }
@@ -110,7 +146,6 @@ class FuriganaText extends StatelessWidget {
       child: RichText(
         text: TextSpan(
           children: furiganaChars.map((furiganaChar) {
-
             // 判断是否需要显示 Furigana，如果是平假名或片假名的组合，则替换 Furigana 为空格
             String? furiganaToShow = furiganaChar.furigana;
             if (furiganaToShow != null && isAllKana(furiganaChar.kanji)) {

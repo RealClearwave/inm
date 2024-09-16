@@ -139,4 +139,34 @@ class SemanticParser {
 
     return currentSentence;
   }
+
+  // 解析 Kuromoji 输出并返回每个词的词性和 Furigana 信息
+  List<Map<String, dynamic>> parseKuromojiWithPos(String kuromojiOutput) {
+    List<Map<String, dynamic>> result = [];
+
+    // Kuromoji 返回的分词结果每行用制表符 '\t' 分隔，第一部分是表面形，第二部分是所有特性
+    List<String> lines = kuromojiOutput.split('\n');
+    for (String line in lines) {
+      if (line.isEmpty) continue;
+
+      List<String> parts = line.split('\t');
+      if (parts.length < 2) continue;
+
+      String surface = parts[0]; // 汉字或假名
+      List<String> features = parts[1].split(','); // 特性
+
+      // 提取 Furigana 和 词性
+      String? furigana = features.length > 7 ? features[7] : null;
+      String pos = features[0];  // 词性
+
+      result.add({
+        'kanji': surface,
+        'furigana': furigana,
+        'pos': pos,  // 保存词性
+      });
+    }
+
+    return result;
+  }
+
 }

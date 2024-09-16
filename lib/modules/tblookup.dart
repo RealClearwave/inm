@@ -1,0 +1,65 @@
+import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
+
+class TbLookup {
+  static Future<List<Map<String, dynamic>>> lookup(String query) async {
+    List<Map<String, dynamic>> exactMatches = [];  // 完全匹配结果
+    List<Map<String, dynamic>> partialMatches = [];  // 部分匹配结果
+
+    // 加载所有 JSON 文件
+    for (int i = 1; i <= 8; i++) {
+      String data = await rootBundle.loadString('assets/dict/term_bank_$i.json');  // 更新资源路径
+      List<dynamic> jsonData = json.decode(data);
+
+      for (var entry in jsonData) {
+        String word = entry[0];  // 第一个字段为词语
+        String kana = entry[1];  // 第二个字段为假名
+        String definition = entry[5][0];  // 定义在第6个字段
+
+        if (word == query) {
+          // 完全匹配
+          exactMatches.add({
+            'word': word,
+            'kana': kana,
+            'definition': definition,
+          });
+        } else {
+          // 计算重合度
+          double similarity = _calculateSimilarity(word, query);
+
+          if (similarity >= 0.5 || query.length <= 3) {
+            partialMatches.add({
+              'word': word,
+              'kana': kana,
+              'definition': definition,
+              'similarity': similarity,  // 保存重合度用于排序
+            });
+          }
+        }
+      }
+    }
+
+    // 如果有完全匹配，返回完全匹配的结果，不显示部分匹配
+    if (exactMatches.isNotEmpty) {
+      return exactMatches;
+    }
+
+    // 对部分匹配结果按重合度排序
+    partialMatches.sort((a, b) => (b['similarity'] as double).compareTo(a['similarity'] as double));
+
+    // 返回部分匹配的结果
+    return partialMatches;
+  }
+
+  // 判断两个字符串的重合度，返回0到1之间的值
+  static double _calculateSimilarity(String word, String query) {
+    Set<String> wordSet = word.split('').toSet();  // 将词语的每个字符转为集合
+    Set<String> querySet = query.split('').toSet();  // 将查询的每个字符转为集合
+
+    int intersectionSize = wordSet.intersection(querySet).length;  // 交集的大小
+    int unionSize = wordSet.union(querySet).length;  // 并集的大小
+
+    // 重合度计算：交集大小除以并集大小
+    return intersectionSize / unionSize;
+  }
+}
