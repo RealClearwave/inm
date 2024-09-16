@@ -253,17 +253,26 @@ class _ReaderPageState extends State<ReaderPage> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        const SizedBox(height: 20),
+        const Text('选择文件：'),
+        const SizedBox(height: 10),
         ElevatedButton(
           onPressed: _pickFile,
-          child: Text('选择文件', style: TextStyle(color: Colors.pink.shade300)),
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.pink.shade50),
+          child: Text('打开本地文件', style: TextStyle(color: Colors.pink.shade300)),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 60),
         if (_recentFiles.isNotEmpty) ...[
           const Text('最近打开的文件：'),
+          const SizedBox(height: 10),
           for (var file in _recentFiles)
-            ListTile(
-              title: Text(file),
+            Card(
+              child: ListTile(
+              title: Text(file.split('/').last),
+              leading: const Icon(Icons.file_copy),
+              trailing: const Icon(Icons.arrow_forward),
               onTap: () => _openRecentFile(file), // 点击快速打开文件
+              ),
             ),
         ] else
           const Text('没有最近打开的文件'),

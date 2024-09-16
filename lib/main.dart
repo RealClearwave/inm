@@ -18,9 +18,22 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'inm',
       theme: ThemeData(
-        primarySwatch: Colors.pink,
+        primarySwatch: Colors.pink, // 主题色调为粉色
+        scaffoldBackgroundColor: Colors.white, // 全局背景颜色为白色
+        inputDecorationTheme: const InputDecorationTheme(
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.pink), // 聚焦时边框为粉色
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.pink), // 普通状态下边框为粉色
+          ),
+          labelStyle: TextStyle(color: Colors.pink), // 提示文本的颜色为粉色
+        ),
+        progressIndicatorTheme: const ProgressIndicatorThemeData(
+          color: Colors.pink, // 加载符号的颜色为粉色
+        ),
       ),
-      home: const MainScreen(),  // 主页面
+      home: const MainScreen(),
     );
   }
 }
@@ -35,7 +48,6 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;  // 当前选中的页面索引
 
-  // 切换的页面
   static const List<Widget> _pages = [
     ReaderPage(),
     DictionaryPage(),
@@ -43,7 +55,6 @@ class _MainScreenState extends State<MainScreen> {
     SettingsPage(),
   ];
 
-  // 页面选择处理函数
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -53,17 +64,18 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex],  // 显示当前页面
+      backgroundColor: Colors.white, // 每个页面背景为白色
+      body: _pages[_selectedIndex],
       bottomNavigationBar: Container(
-        color: Colors.grey.shade100,  // 导航栏背景颜色
+        color: Colors.grey.shade100,
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
         child: GNav(
-          gap: 8,  // 图标和文字之间的距离
-          color: Colors.pink.shade200,  // 图标颜色
-          activeColor: Colors.pink.shade300,  // 选中的颜色
-          tabBackgroundColor: Colors.grey.shade300,  // 选中的背景颜色
+          gap: 8,
+          color: Colors.pink.shade200,
+          activeColor: Colors.pink.shade300,
+          tabBackgroundColor: Colors.grey.shade300,
           padding: const EdgeInsets.all(16),
-          onTabChange: _onItemTapped,  // 点击切换页面
+          onTabChange: _onItemTapped,
           tabs: const [
             GButton(
               icon: Icons.book,

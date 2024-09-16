@@ -26,32 +26,32 @@ class _DictionaryPageState extends State<DictionaryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('辞书'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _controller,
-              decoration: const InputDecoration(
-                labelText: '请输入词语',
-                border: OutlineInputBorder(),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              const SizedBox(height: 20),
+              TextField(
+                controller: _controller,
+                decoration: const InputDecoration(
+                  labelText: '请输入词语',
+                  border: OutlineInputBorder(),
+                ),
+                onSubmitted: (value) {
+                  setState(() {
+                    _query = value;
+                  });
+                },
               ),
-              onSubmitted: (value) {
-                setState(() {
-                  _query = value;
-                });
-              },
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: DictView(query: _query),  // 显示查询结果
-            ),
-          ],
+              const SizedBox(height: 20),
+              Expanded(
+                child: DictView(query: _query),  // 显示查询结果
+              ),
+            ],
+          ),
         ),
-      ),
+      )
     );
   }
 }

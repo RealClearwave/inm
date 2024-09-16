@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:shared_preferences/shared_preferences.dart';  // 添加SharedPreferences支持
 
 class TbLookup {
   static Future<List<Map<String, dynamic>>> lookup(String query) async {
@@ -7,6 +8,9 @@ class TbLookup {
     List<Map<String, dynamic>> partialMatches = [];  // 部分匹配结果
 
     // 加载所有 JSON 文件
+
+    int partialCount = 0;
+
     for (int i = 1; i <= 8; i++) {
       String data = await rootBundle.loadString('assets/dict/term_bank_$i.json');  // 更新资源路径
       List<dynamic> jsonData = json.decode(data);
@@ -27,13 +31,15 @@ class TbLookup {
           // 计算重合度
           double similarity = _calculateSimilarity(word, query);
 
-          if (similarity >= 0.5 || query.length <= 3) {
+          if (similarity >= 0.5 && partialCount < 10) {
+            // 部分匹配
             partialMatches.add({
               'word': word,
               'kana': kana,
               'definition': definition,
               'similarity': similarity,  // 保存重合度用于排序
             });
+            partialCount++;
           }
         }
       }
@@ -57,9 +63,33 @@ class TbLookup {
     Set<String> querySet = query.split('').toSet();  // 将查询的每个字符转为集合
 
     int intersectionSize = wordSet.intersection(querySet).length;  // 交集的大小
-    int unionSize = wordSet.union(querySet).length;  // 并集的大小
 
-    // 重合度计算：交集大小除以并集大小
-    return intersectionSize / unionSize;
+    return intersectionSize / querySet.length;
+  }
+
+  // 收藏单词功能
+  static Future<void> addToFavorites(String word) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> favorites = prefs.getStringList('favorites') ?? [];
+    if (!favorites.contains(word)) {
+      favorites.add(word);
+      await prefs.setStringList('favorites', favorites);
+    }
+  }
+
+  // 获取收藏单词列表
+  static Future<List<String>> getFavorites() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList('favorites') ?? [];
+  }
+
+  // 从收藏单词中移除
+  static Future<void> removeFromFavorites(String word) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> favorites = prefs.getStringList('favorites') ?? [];
+    if (favorites.contains(word)) {
+      favorites.remove(word);
+      await prefs.setStringList('favorites', favorites);
+    }
   }
 }
