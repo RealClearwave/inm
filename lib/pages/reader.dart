@@ -98,7 +98,9 @@ class _ReaderPageState extends State<ReaderPage> {
       //print('Read $splittedSentences Sentences');
       _allPages = _parser.buildPages(splittedSentences);  // 分句
       _totalPages = _allPages.length;  // 计算总页数
-      //print('Total Pages: $_totalPages');
+      
+      // 加载第一页内容
+      _loadMorePages();
 
       setState(() {
         _fileOpened = true;  // 标记文件已打开
