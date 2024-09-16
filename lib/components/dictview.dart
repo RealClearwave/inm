@@ -221,7 +221,7 @@ class _DictViewState extends State<DictView> {
   // 使用 Kuromoji 解析所有合并的日语例句，并返回解析后的结果
   Future<List<List<FuriganaChar>>> _parseAllExamples(String allJapaneseExamples, String word) async {
     final SemanticParser parser = SemanticParser();
-
+    posSet = [];
     // 解析合并的所有日语例句
     String modifiedExamples = allJapaneseExamples.replaceAll('～', word);
     List<Map<String, dynamic>> parsedSentences = parser.parseKuromojiWithPos(await parser.tokenizeText(modifiedExamples));
@@ -234,6 +234,16 @@ class _DictViewState extends State<DictView> {
     for (var entry in parsedSentences) {
       String kanji = entry['kanji'];
       String? furigana = entry['furigana'];
+      String pos = entry['pos'];  // 提取词性
+
+      // 将词性添加到 posSet
+      
+      if (kanji == word){
+        //print('entry.kanji = $kanji, word = $word, pos = $pos');
+        //print('current posSet = $posSet');
+        posSet.add(pos);
+      }
+
       currentSentence.add(FuriganaChar(
         kanji: kanji,
         furigana: furigana,
@@ -253,6 +263,10 @@ class _DictViewState extends State<DictView> {
       result.add(currentSentence);
     }
 
+    // 去重并保留唯一词性
+    posSet = posSet.toSet().toList();
+
     return result;
   }
+
 }
