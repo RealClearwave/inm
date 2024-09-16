@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../modules/qzutil.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -8,54 +9,69 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  String _logs = '';
+  String _selectedLevel = QzUtil.selectedLevel;
 
   @override
   void initState() {
     super.initState();
-    _loadLogs();  // 加载日志
+    _loadSelectedLevel();
   }
 
-  // 加载日志
-  Future<void> _loadLogs() async {
+  Future<void> _loadSelectedLevel() async {
+    await QzUtil.init();
     setState(() {
-      _logs = "Deprecated: 'LogManager' is no longer available.";
+      _selectedLevel = QzUtil.selectedLevel;
     });
   }
 
-  // 清除日志
-  Future<void> _clearLogs() async {
-    _loadLogs();  // 清除后重新加载日志
+  Future<void> _saveSelectedLevel(String level) async {
+    await QzUtil.saveSelectedLevel(level);
+    setState(() {
+      _selectedLevel = level;
+    });
+  }
+
+  Future<void> _resetProgress() async {
+    QzUtil.progress.clear();
+    await QzUtil.saveProgress();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('背诵进度已重置')),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('设置'),
+        title: const Text('設定'),
+        backgroundColor: Colors.pink[50],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              '应用日志',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              '选择词汇级别：',
+              style: TextStyle(fontSize: 18),
             ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Text(
-                  _logs.isEmpty ? '暂无日志' : _logs,
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ),
+            DropdownButton<String>(
+              value: _selectedLevel,
+              items: ['n1', 'n2', 'n3', 'n4', 'n5']
+                  .map((level) => DropdownMenuItem(
+                        value: level,
+                        child: Text(level.toUpperCase()),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  _saveSelectedLevel(value);
+                }
+              },
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _clearLogs,
-              child: const Text('清除日志'),
+              onPressed: _resetProgress,
+              child: const Text('重置背诵进度'),
             ),
           ],
         ),

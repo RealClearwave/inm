@@ -26,8 +26,21 @@ class _DictionaryPageState extends State<DictionaryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
+      appBar: AppBar(
+        title: const Text('辞書'),
+        backgroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              setState(() {
+                _query = _controller.text;
+              });
+            },
+          ),
+        ],
+      ),
+      body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
@@ -51,7 +64,6 @@ class _DictionaryPageState extends State<DictionaryPage> {
             ],
           ),
         ),
-      )
     );
   }
 }

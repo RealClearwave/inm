@@ -3,7 +3,7 @@ import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:inm/pages/dictionary.dart';
 import 'package:inm/pages/reader.dart';
 import 'package:inm/pages/settings.dart';
-import 'package:inm/pages/wordbank.dart';
+import 'package:inm/pages/quiz.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'inm',
+      title: 'inm日本語',
       theme: ThemeData(
         primarySwatch: Colors.pink, // 主题色调为粉色
         scaffoldBackgroundColor: Colors.white, // 全局背景颜色为白色
@@ -51,7 +51,7 @@ class _MainScreenState extends State<MainScreen> {
   static const List<Widget> _pages = [
     ReaderPage(),
     DictionaryPage(),
-    WordBankPage(),
+    QuizPage(),
     SettingsPage(),
   ];
 
@@ -79,19 +79,19 @@ class _MainScreenState extends State<MainScreen> {
           tabs: const [
             GButton(
               icon: Icons.book,
-              text: '阅读',
+              text: '読み',
             ),
             GButton(
               icon: Icons.translate,
-              text: '辞书',
+              text: '辞書',
             ),
             GButton(
               icon: Icons.library_books,
-              text: '背词',
+              text: '暗記',
             ),
             GButton(
               icon: Icons.settings,
-              text: '设置',
+              text: '設定',
             ),
           ],
         ),

@@ -202,16 +202,26 @@ class _ReaderPageState extends State<ReaderPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Stack(
-          children: [
-            _fileOpened
-              ? _buildPageView()  // 如果文件已打开，显示内容分页
-              : _buildRecentFilesList(),  // 否则显示最近打开的文件列表
-            if (_isLoading)
-              const Center(child: CircularProgressIndicator()),  // 显示加载动画
-          ],
-        ),
+      appBar: AppBar(
+        title: _fileOpened?Text('読み ( $_currentPage / $_totalPages )'):const Text("読み"),
+        backgroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.play_arrow),
+            onPressed: () {
+              _loadMorePages();  // 刷新页面
+            },
+          ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          _fileOpened
+            ? _buildPageView()  // 如果文件已打开，显示内容分页
+            : _buildRecentFilesList(),  // 否则显示最近打开的文件列表
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator()),  // 显示加载动画
+        ],
       ),
     );
   }
@@ -225,21 +235,9 @@ class _ReaderPageState extends State<ReaderPage> {
           controller: _pageController,
           itemCount: _pages.length,
           itemBuilder: (context, index) {
-            return Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: InmView(pageContent: _pages[index]), // 使用 InmView 显示每页内容
-            );
+            return InmView(pageContent: _pages[index]); // 使用 InmView 显示每页内容
           },
         ),
-        if (!_isLoading)
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Text('第 $_currentPage 页 / 共 $_totalPages 页', style: const TextStyle(fontSize: 10), ),  // 加载动画
-            ),
-          ),
         if (_isLoading)
           const Center(
             child: CircularProgressIndicator(),  // 加载动画
