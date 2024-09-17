@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
         // 按钮主题颜色
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.pink.shade300, backgroundColor: Colors.pink.shade50, // 按钮文字颜色
+            foregroundColor: Colors.pink.shade300, backgroundColor: Colors.grey.shade100, // 按钮文字颜色
           ),
         ),
         textButtonTheme: TextButtonThemeData(

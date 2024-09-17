@@ -251,8 +251,7 @@ class _ReaderPageState extends State<ReaderPage> {
         const SizedBox(height: 10),
         ElevatedButton(
           onPressed: _pickFile,
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.pink.shade50),
-          child: Text('打开本地文件', style: TextStyle(color: Colors.pink.shade300)),
+          child: const Text('打开本地文件'),
         ),
         const SizedBox(height: 60),
         if (_recentFiles.isNotEmpty) ...[
@@ -262,7 +261,7 @@ class _ReaderPageState extends State<ReaderPage> {
             Card(
               child: ListTile(
               
-              tileColor: Colors.pink.shade50, // 背景颜色
+              tileColor: Colors.grey.shade100, // 背景颜色
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(13), // 设置边角弧度
               ),

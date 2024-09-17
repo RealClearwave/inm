@@ -108,26 +108,23 @@ class _QuizViewState extends State<QuizView> {
           ..._currentQuizItem.options.map((option) {
             return ElevatedButton(
               onPressed: _showResult ? null : () => _checkAnswer(option),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _showResult
-                    ? option == _currentQuizItem.correctAnswer
-                        ? Colors.green
-                        : Colors.red
-                    : null,
+              child: Text(
+                option.replaceAll(RegExp(r'\s+'), ''),
+                textAlign: TextAlign.center,
               ),
-              child: Text(option),
             );
           }),
           if (_showResult)
             Text(
               _isCorrect ? '回答正确！' : '回答错误！正确答案是：${_currentQuizItem.correctAnswer}',
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
                 color: _isCorrect ? Colors.green : Colors.red,
               ),
             ),
           const SizedBox(height: 20),
-          Text('当前词汇进度：${QzUtil.progress[_currentWord]??'0'}/3'),
+          Text('当前词汇进度：${QzUtil.progress[_currentWord]??'0'}/3',textAlign: TextAlign.center,),
         ],
       ),
     );
