@@ -7,18 +7,21 @@ class TransUtil {
   // 单例模式
   static final TransUtil _instance = TransUtil._internal();
   factory TransUtil() => _instance;
+  
   TransUtil._internal();
 
   String apiUrl = ''; // 翻译 API 的 URL
-  bool isTranslationEnabled = false; // 是否启用翻译
+  bool isTranslationEnabled = true; // 是否启用翻译
 
   // 初始化
   Future<void> init() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    apiUrl = prefs.getString('translationApiUrl') ?? '';
-    isTranslationEnabled = prefs.getBool('isTranslationEnabled') ?? false;
+    apiUrl = prefs.getString('translationApiUrl') ?? 
+    'https://mozhi.pussthecat.org/api/translate?engine=deepl&from=ja&to=zh&text=';
+    isTranslationEnabled = prefs.getBool('isTranslationEnabled') ?? true;
+    print('翻译API：$apiUrl, 启用翻译：$isTranslationEnabled');
   }
-  
+
   // 设置翻译 API 的 URL
   Future<void> setApiUrl(String url) async{
     apiUrl = url;
@@ -55,11 +58,11 @@ class TransUtil {
         //print('翻译结果：$result');
         return result;
       } else {
-        print('翻译请求失败：${response.statusCode}');
+        //print('翻译请求失败：${response.statusCode}');
         return '';
       }
     } catch (e) {
-      print('翻译异常：$e');
+      //print('翻译异常：$e');
       return '';
     }
   }

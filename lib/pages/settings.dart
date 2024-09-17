@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import '../modules/qzutil.dart';
 import '../modules/transutil.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -24,15 +23,14 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _loadSettings() async {
     await QzUtil.init();
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final TransUtil _transUtil = TransUtil();
+    await _transUtil.init();
+
+    print('启用：${_transUtil.isTranslationEnabled}, URL：${_transUtil.apiUrl}');
     setState(() {
       _selectedLevel = QzUtil.selectedLevel;
-      _isTranslationEnabled = prefs.getBool('isTranslationEnabled') ?? false;
-      _apiUrlController.text = prefs.getString('translationApiUrl') ??
-          'https://mozhi.pussthecat.org/api/translate?engine=deepl&from=ja&to=zh&text=';
-      // 设置 TransUtil 的初始值
-      TransUtil().setTranslationEnabled(_isTranslationEnabled);
-      TransUtil().setApiUrl(_apiUrlController.text);
+      _isTranslationEnabled = _transUtil.isTranslationEnabled;
+      _apiUrlController.text = _transUtil.apiUrl;
     });
   }
 
