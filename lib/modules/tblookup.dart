@@ -22,10 +22,12 @@ class TbLookup {
         // 判断是否查询汉字或假名
         if (word == query || kana == query) {
           // 完全匹配
+          //print('查询：$query，词语：$word，假名：$kana');
+          //print('processed definition: ${definition.replaceAll('～', word)}');
           exactMatches.add({
             'word': word,
             'kana': kana,
-            'definition': definition,
+            'definition': definition.replaceAll('～', word),
           });
         } else {
           // 计算重合度，适用于部分匹配
@@ -34,10 +36,12 @@ class TbLookup {
 
           // 如果匹配汉字或假名，且重合度达到标准，加入部分匹配结果
           if ((wordSimilarity >= 0.5 || kanaSimilarity >= 0.5) && partialCount < 10) {
+            //print('查询：$query，词语：$word，假名：$kana');
+            //print('processed definition: ${definition.replaceAll('～', word)}');
             partialMatches.add({
               'word': word,
               'kana': kana,
-              'definition': definition,
+              'definition': definition.replaceAll('～', word),
               'similarity': wordSimilarity > kanaSimilarity ? wordSimilarity : kanaSimilarity,
             });
             partialCount++;

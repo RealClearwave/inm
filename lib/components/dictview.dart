@@ -15,7 +15,7 @@ class DictView extends StatefulWidget {
 }
 
 class _DictViewState extends State<DictView> {
-  List<String> posSet = [];
+  Map<String,List<String>> posSet = {};
   bool _isFavorite = false;
   List<String> recentQueries = [];
 
@@ -92,13 +92,13 @@ class _DictViewState extends State<DictView> {
         } else {
           final allJapaneseExamples = _getAllJapaneseExamples(snapshot.data!);
           final allTranslations = _getAllTranslations(snapshot.data!);
-          return FutureBuilder<List<List<FuriganaChar>>>(
-            future: _parseAllExamples(allJapaneseExamples, widget.query),
+          return FutureBuilder<Map<String,List<List<FuriganaChar>>>>(
+            future: _parseAllExamples(allJapaneseExamples, snapshot.data!),
             builder: (context, parsedSnapshot) {
               if (parsedSnapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               } else if (parsedSnapshot.hasError || !parsedSnapshot.hasData) {
-                return const Center(child: Text('解析失败'));
+                return Center(child: Text('解析失败：${parsedSnapshot.error}'));
               } else {
                 return Stack(
                   children: [
@@ -108,6 +108,7 @@ class _DictViewState extends State<DictView> {
                         final result = snapshot.data![index];
                         String word = result['word'];
                         String kana = result['kana'];
+                        //print(result['definition']);
                         List<String> definitions = result['definition'].split('（');
 
                         return Padding(
@@ -136,7 +137,7 @@ class _DictViewState extends State<DictView> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                posSet.toSet().join(', '),
+                                posSet[word]!.toSet().join(', '),
                                 style: const TextStyle(
                                   fontSize: 18,
                                   color: Colors.grey,
@@ -151,7 +152,7 @@ class _DictViewState extends State<DictView> {
                                   definitionIndex,
                                   definitionText,
                                   word,
-                                  parsedSnapshot.data!,
+                                  parsedSnapshot.data![word]!,
                                   allTranslations,
                                 );
                               }),
@@ -241,11 +242,12 @@ class _DictViewState extends State<DictView> {
     List<String> allJapaneseExamples = [];
     for (var result in data) {
       List<String> definitions = result['definition'].split('（');
+      String word = result['word'];
       for (String definition in definitions) {
         List<String> examplePair = definition.split('▲').skip(1).toList();
         for (var example in examplePair) {
           List<String> parts = example.split('/');
-          allJapaneseExamples.add(parts[0]);
+          allJapaneseExamples.add("@$word。${parts[0]}");
         }
       }
     }
@@ -274,6 +276,8 @@ class _DictViewState extends State<DictView> {
 
   Widget _buildDefinitionItem(BuildContext context, int index, String text, String word, List<List<FuriganaChar>> parsedExamples, List<String> allTranslations) {
     List<String> parsedDef = text.split('▲');
+    //print(parsedDef);
+    //print(parsedDef);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -331,43 +335,67 @@ class _DictViewState extends State<DictView> {
     );
   }
 
-  Future<List<List<FuriganaChar>>> _parseAllExamples(String allJapaneseExamples, String word) async {
+  Future<Map<String,List<List<FuriganaChar>>>> _parseAllExamples(String allJapaneseExamples, List<Map<String, dynamic>> snapshot) async {
     final SemanticParser parser = SemanticParser();
-    posSet = [];
-    String modifiedExamples = allJapaneseExamples.replaceAll('～', word);
-    List<Map<String, dynamic>> parsedSentences = parser.parseKuromojiWithPos(await parser.tokenizeText(modifiedExamples));
+    posSet = {};
+    List<Map<String, dynamic>> parsedSentences = parser.parseKuromojiWithPos(await parser.tokenizeText(allJapaneseExamples));
 
-    List<List<FuriganaChar>> result = [];
+    Map<String,List<List<FuriganaChar>>> result = {};
     List<FuriganaChar> currentSentence = [];
     final sentenceEndRegex = RegExp(r'[。！？]');
 
+    List words = snapshot.map((entry) => entry['word']).toList();
+
+    //print('words: $words, kanas: $kanas');
+    for (var word in words) {
+      posSet[word] = [];
+      result[word] = [];
+    }
+
+    String currentWord = '';
+    bool undergoingWord = false;
     for (var entry in parsedSentences) {
       String kanji = entry['kanji'];
       String? furigana = entry['furigana'];
       String pos = entry['pos'];
 
-      if (kanji == word) {
-        posSet.add(pos);
+      if (kanji == '@'){
+        currentWord = '';
+        undergoingWord = true;
+        continue;
+      }
+
+      if (undergoingWord){
+        if (kanji == '。'){
+          undergoingWord = false;
+          //print('currentWord: $currentWord');
+        }else{
+          currentWord += kanji;
+        }
+        continue;
+      }
+
+      if (words.contains(kanji) && !posSet[kanji]!.contains(pos)) {
+        posSet[kanji]?.add(pos);
       }
 
       currentSentence.add(FuriganaChar(
         kanji: kanji,
         furigana: furigana,
-        underline: kanji == word,
-        bold: kanji == word,
+        underline: words.contains(kanji),
+        bold: words.contains(kanji),
       ));
 
       if (sentenceEndRegex.hasMatch(kanji)) {
-        result.add(currentSentence);
+        result[currentWord]?.add(currentSentence);
         currentSentence = [];
       }
     }
 
     if (currentSentence.isNotEmpty) {
-      result.add(currentSentence);
+      result[currentWord]?.add(currentSentence);
     }
 
-    posSet = posSet.toSet().toList();
     return result;
   }
 
