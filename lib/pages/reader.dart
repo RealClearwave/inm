@@ -181,7 +181,7 @@ class _ReaderPageState extends State<ReaderPage> {
         break;  // 已经加载了所有页面
       }
 
-      // 加载下一批页面，假设每次加载 50 页
+      // 加载下一批页面，每次加载 50 页
       int nextPageEnd = (_pages.length + 50).clamp(0, _allPages.length);
       List<List<String>> nextPages = _allPages.sublist(_pages.length, nextPageEnd);
       List<List<List<FuriganaChar>>> parsedPages = await _parser.parsePages(nextPages);
@@ -237,7 +237,7 @@ class _ReaderPageState extends State<ReaderPage> {
           controller: _pageController,
           itemCount: _pages.length,
           itemBuilder: (context, index) {
-            return InmView(pageContent: _pages[index]); // 使用 InmView 显示每页内容
+            return InmView(pageContent: _pages[index], originalSentences: _allPages[index],); // 使用 InmView 显示每页内容
           },
         ),
         if (_isLoading)
