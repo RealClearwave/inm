@@ -108,7 +108,6 @@ class _QuizViewState extends State<QuizView> {
           ..._currentQuizItem.options.map((option) {
             return ElevatedButton(
               onPressed: _showResult ? null : () => _checkAnswer(option),
-              child: Text(option),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _showResult
                     ? option == _currentQuizItem.correctAnswer
@@ -116,6 +115,7 @@ class _QuizViewState extends State<QuizView> {
                         : Colors.red
                     : null,
               ),
+              child: Text(option),
             );
           }),
           if (_showResult)

@@ -7,20 +7,20 @@ class TbLookup {
     List<Map<String, dynamic>> exactMatches = [];  // 完全匹配结果
     List<Map<String, dynamic>> partialMatches = [];  // 部分匹配结果
 
-    // 加载所有 JSON 文件
-
     int partialCount = 0;
 
+    // 加载所有 JSON 文件
     for (int i = 1; i <= 8; i++) {
       String data = await rootBundle.loadString('assets/dict/term_bank_$i.json');  // 更新资源路径
       List<dynamic> jsonData = json.decode(data);
 
       for (var entry in jsonData) {
-        String word = entry[0];  // 第一个字段为词语
+        String word = entry[0];  // 第一个字段为词语（汉字）
         String kana = entry[1];  // 第二个字段为假名
         String definition = entry[5][0];  // 定义在第6个字段
 
-        if (word == query) {
+        // 判断是否查询汉字或假名
+        if (word == query || kana == query) {
           // 完全匹配
           exactMatches.add({
             'word': word,
@@ -28,16 +28,17 @@ class TbLookup {
             'definition': definition,
           });
         } else {
-          // 计算重合度
-          double similarity = _calculateSimilarity(word, query);
+          // 计算重合度，适用于部分匹配
+          double wordSimilarity = _calculateSimilarity(word, query);
+          double kanaSimilarity = _calculateSimilarity(kana, query);
 
-          if (similarity >= 0.5 && partialCount < 10) {
-            // 部分匹配
+          // 如果匹配汉字或假名，且重合度达到标准，加入部分匹配结果
+          if ((wordSimilarity >= 0.5 || kanaSimilarity >= 0.5) && partialCount < 10) {
             partialMatches.add({
               'word': word,
               'kana': kana,
               'definition': definition,
-              'similarity': similarity,  // 保存重合度用于排序
+              'similarity': wordSimilarity > kanaSimilarity ? wordSimilarity : kanaSimilarity,
             });
             partialCount++;
           }
