@@ -102,7 +102,3 @@ Contributions are welcome! Feel free to open an issue or submit a pull request.
 - Big thanks to [Kuromoji](https://www.atilika.org/) for providing the Japanese morphological analysis.
 - Thanks to [Yomichan](https://github.com/FooSoft/yomichan) for inspiring the dictionary lookup features.
 - [DeepL](https://www.deepl.com/) and [Mozhi](https://mozhi.pussthecat.org/) APIs for providing translation services.
-
----
-
-Feel free to adapt this README to your project's future needs and development!
