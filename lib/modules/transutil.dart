@@ -19,7 +19,7 @@ class TransUtil {
     apiUrl = prefs.getString('translationApiUrl') ?? 
     'https://mozhi.pussthecat.org/api/translate?engine=deepl&from=ja&to=zh&text=';
     isTranslationEnabled = prefs.getBool('isTranslationEnabled') ?? true;
-    print('翻译API：$apiUrl, 启用翻译：$isTranslationEnabled');
+    //print('翻译API：$apiUrl, 启用翻译：$isTranslationEnabled');
   }
 
   // 设置翻译 API 的 URL

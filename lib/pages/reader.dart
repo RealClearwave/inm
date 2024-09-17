@@ -206,15 +206,8 @@ class _ReaderPageState extends State<ReaderPage> {
     return Scaffold(
       appBar: AppBar(
         title: _fileOpened?Text('読み ( $_currentPage / $_totalPages )'):const Text("読み"),
-        backgroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.play_arrow),
-            onPressed: () {
-              _loadMorePages();  // 刷新页面
-            },
-          ),
-        ],
+        backgroundColor: Colors.grey.shade50,
+        foregroundColor: Colors.pink.shade300,
       ),
       body: Stack(
         children: [
@@ -268,6 +261,11 @@ class _ReaderPageState extends State<ReaderPage> {
           for (var file in _recentFiles)
             Card(
               child: ListTile(
+              
+              tileColor: Colors.pink.shade50, // 背景颜色
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(13), // 设置边角弧度
+              ),
               title: Text(file.split('/').last),
               leading: const Icon(Icons.file_copy),
               trailing: const Icon(Icons.arrow_forward),

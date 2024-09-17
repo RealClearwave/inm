@@ -4,6 +4,7 @@ import 'package:inm/pages/dictionary.dart';
 import 'package:inm/pages/reader.dart';
 import 'package:inm/pages/settings.dart';
 import 'package:inm/pages/quiz.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,12 +15,47 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      systemNavigationBarColor: Colors.grey.shade100, // 设置导航条颜色
+      systemNavigationBarIconBrightness: Brightness.dark, // 图标颜色
+    ));
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'inm日本語',
       theme: ThemeData(
+        scaffoldBackgroundColor: Colors.white, // 背景色为白色
         primarySwatch: Colors.pink, // 主题色调为粉色
-        scaffoldBackgroundColor: Colors.white, // 全局背景颜色为白色
+        // 按钮主题颜色
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            foregroundColor: Colors.pink.shade300, backgroundColor: Colors.pink.shade50, // 按钮文字颜色
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.pink.shade300, // 文本按钮颜色
+          ),
+        ),
+
+        // Switch 主题颜色
+        switchTheme: SwitchThemeData(
+          thumbColor: WidgetStateProperty.all(Colors.pink.shade300), // 开关按钮颜色
+          trackColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return Colors.pink.shade100; // 开启时的轨道颜色
+            }
+            return Colors.brown.shade200; // 关闭时的轨道颜色
+          }),
+        ),
+
+        // ListTile 主题颜色
+        listTileTheme: ListTileThemeData(
+          iconColor: Colors.pink.shade300, // 图标颜色
+          textColor: Colors.black, // 文字颜色
+          selectedTileColor: Colors.pink.shade50, // 选中时的背景颜色
+        ),
+
+        // InputDecoration 主题，控制 TextField 等输入控件的颜色
         inputDecorationTheme: const InputDecorationTheme(
           focusedBorder: OutlineInputBorder(
             borderSide: BorderSide(color: Colors.pink), // 聚焦时边框为粉色
@@ -29,6 +65,8 @@ class MyApp extends StatelessWidget {
           ),
           labelStyle: TextStyle(color: Colors.pink), // 提示文本的颜色为粉色
         ),
+
+        // 进度指示器颜色
         progressIndicatorTheme: const ProgressIndicatorThemeData(
           color: Colors.pink, // 加载符号的颜色为粉色
         ),

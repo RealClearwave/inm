@@ -28,7 +28,8 @@ class _DictionaryPageState extends State<DictionaryPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('辞書'),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.grey.shade50,
+        foregroundColor: Colors.pink.shade300,
         actions: [
           IconButton(
             icon: const Icon(Icons.search),

@@ -9,7 +9,8 @@ class QuizPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('暗記'),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.grey.shade50,
+        foregroundColor: Colors.pink.shade300,
       ),
       body: const QuizView(),
     );

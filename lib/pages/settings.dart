@@ -26,7 +26,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final TransUtil _transUtil = TransUtil();
     await _transUtil.init();
 
-    print('启用：${_transUtil.isTranslationEnabled}, URL：${_transUtil.apiUrl}');
+    //print('启用：${_transUtil.isTranslationEnabled}, URL：${_transUtil.apiUrl}');
     setState(() {
       _selectedLevel = QzUtil.selectedLevel;
       _isTranslationEnabled = _transUtil.isTranslationEnabled;
@@ -60,7 +60,8 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('设置'),
-        backgroundColor: Colors.pink[50],
+        backgroundColor: Colors.grey.shade50,
+        foregroundColor: Colors.pink.shade300,
       ),
       body: SingleChildScrollView(
         child: Padding(
