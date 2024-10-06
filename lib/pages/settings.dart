@@ -23,14 +23,14 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _loadSettings() async {
     await QzUtil.init();
-    final TransUtil _transUtil = TransUtil();
-    await _transUtil.init();
+    final TransUtil transUtil = TransUtil();
+    await transUtil.init();
 
     //print('启用：${_transUtil.isTranslationEnabled}, URL：${_transUtil.apiUrl}');
     setState(() {
       _selectedLevel = QzUtil.selectedLevel;
-      _isTranslationEnabled = _transUtil.isTranslationEnabled;
-      _apiUrlController.text = _transUtil.apiUrl;
+      _isTranslationEnabled = transUtil.isTranslationEnabled;
+      _apiUrlController.text = transUtil.apiUrl;
     });
   }
 

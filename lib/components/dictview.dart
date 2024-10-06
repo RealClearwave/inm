@@ -90,10 +90,8 @@ class _DictViewState extends State<DictView> {
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Center(child: Text('未找到结果'));
         } else {
-          //debugPrint('snapshot: ${snapshot.data!}', wrapWidth: 4096);
           final allJapaneseExamples = _getAllJapaneseExamples(snapshot.data!);
           final allTranslations = _getAllTranslations(snapshot.data!);
-          //debugPrint('allJapaneseExamples: $allJapaneseExamples', wrapWidth: 4096);
           return FutureBuilder<Map<String,List<List<FuriganaChar>>>>(
             future: _parseAllExamples(allJapaneseExamples, snapshot.data!),
             builder: (context, parsedSnapshot) {
@@ -102,20 +100,16 @@ class _DictViewState extends State<DictView> {
               } else if (parsedSnapshot.hasError || !parsedSnapshot.hasData) {
                 return Center(child: Text('解析失败：${parsedSnapshot.error}'));
               } else {
-                //debugPrint('parsedExamples: ${parsedSnapshot.data!.keys}', wrapWidth: 4096);
+                var beginTranslationIndex = 0;
                 return Stack(
                   children: [
                     ListView.builder(
                       itemCount: snapshot.data!.length,
                       itemBuilder: (context, index) {
                         final result = snapshot.data![index];
-                        //print('result: $result');
-                        //print('posset: $posSet');
                         String word = result['word'];
                         String kana = result['kana'];
                         String keyWord = '$word$kana';
-                        //print('keyWord: $keyWord');
-                        //print(result['definition']);
                         List<String> definitions = result['definition'].split('（');
                         var beginSentenceIndex = 0;
                         return Padding(
@@ -154,18 +148,19 @@ class _DictViewState extends State<DictView> {
                               ...definitions.asMap().entries.map((entry) {
                                 int definitionIndex = entry.key + 1;
                                 String definitionText = entry.value;
-
-                                var xx =  _buildDefinitionItem(
-                                  context,
-                                  definitionIndex,
-                                  beginSentenceIndex,
-                                  definitionText,
-                                  word,
-                                  parsedSnapshot.data![keyWord]!,
-                                  allTranslations,
-                                );
+                                Widget xx =  _buildDefinitionItem(
+                                    context,
+                                    definitionIndex,
+                                    beginSentenceIndex,
+                                    beginTranslationIndex,
+                                    definitionText,
+                                    word,
+                                    parsedSnapshot.data![keyWord]!,
+                                    allTranslations,
+                                  );
 
                                 beginSentenceIndex += definitionText.split('▲').length - 1;
+                                beginTranslationIndex += definitionText.split('▲').length - 1;
                                 return xx;
                               }),
                             ],
@@ -288,7 +283,7 @@ class _DictViewState extends State<DictView> {
     return allTranslations;
   }
 
-  Widget _buildDefinitionItem(BuildContext context, int index, int beginSentenceIndex, String text, String word, List<List<FuriganaChar>> parsedExamples, List<String> allTranslations) {
+  Widget _buildDefinitionItem(BuildContext context, int index, int beginSentenceIndex, int beginTranslationIndex, String text, String word, List<List<FuriganaChar>> parsedExamples, List<String> allTranslations) {
     List<String> parsedDef = text.split('▲');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -306,14 +301,14 @@ class _DictViewState extends State<DictView> {
           ),
         ),
         if (parsedDef.length > 1)
-          _buildExampleItem(context, parsedExamples, word, beginSentenceIndex, parsedDef.length - 1, allTranslations),
+          _buildExampleItem(context, parsedExamples, word, beginSentenceIndex, beginTranslationIndex, parsedDef.length - 1, allTranslations),
       ],
     );
   }
 
-  Widget _buildExampleItem(BuildContext context, List<List<FuriganaChar>> parsedExamples, String word, int beginSentenceIndex, int exampleCount, List<String> allTranslations) {
+  Widget _buildExampleItem(BuildContext context, List<List<FuriganaChar>> parsedExamples, String word, int beginSentenceIndex, int beginTranslationIndex, int exampleCount, List<String> allTranslations) {
     List<Widget> exampleWidgets = [];
-    for (int i = beginSentenceIndex; i < beginSentenceIndex + exampleCount; i++) {
+    for (int i = 0; i < exampleCount; i++) {
       exampleWidgets.add(
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -327,14 +322,14 @@ class _DictViewState extends State<DictView> {
                   ],
                 ),
                 Expanded(
-                  child: FuriganaText(furiganaChars: parsedExamples[i]),
+                  child: FuriganaText(furiganaChars: parsedExamples[beginSentenceIndex+i]),
                 ),
               ],
             ),
             const SizedBox(height: 4),
-            if (allTranslations[i].isNotEmpty)
+            if (beginTranslationIndex+i < allTranslations.length && [beginTranslationIndex+i].isNotEmpty)
               Text(
-                allTranslations[i],
+                allTranslations[beginTranslationIndex+i],
                 style: const TextStyle(color: Colors.grey),
               ),
           ],
@@ -355,19 +350,13 @@ class _DictViewState extends State<DictView> {
     List<FuriganaChar> currentSentence = [];
     final sentenceEndRegex = RegExp(r'[。！？]');
 
-    //debugPrint('snapshot: $snapshot', wrapWidth: 4096);
     List words = snapshot.map((entry) => entry['word']).toList();
     List kanas = snapshot.map((entry) => entry['kana']).toList();
-    //print(allJapaneseExamples);
-    //print('words: $words, kanas: $kanas');
     
-    Map<String,String> word2Key = {};
     for (int i = 0; i < words.length; i++) {
       String key = '${words[i]}${kanas[i]}';
-      //print("insert key : $key");
       posSet[key] = [];
       result[key] = [];
-      word2Key[words[i]] = key;
     }
 
     String currentWord = '';
@@ -386,15 +375,14 @@ class _DictViewState extends State<DictView> {
       if (undergoingWord){
         if (kanji == '。'){
           undergoingWord = false;
-          //print('currentWord: $currentWord');
         }else{
           currentWord += kanji;
         }
         continue;
       }
 
-      if (words.contains(kanji) && !posSet[word2Key[kanji]]!.contains(pos)) {
-        posSet[word2Key[kanji]]?.add(pos);
+      if (words.contains(kanji) && !posSet[currentWord]!.contains(pos)) {
+        posSet[currentWord]?.add(pos);
       }
 
       currentSentence.add(FuriganaChar(
@@ -414,7 +402,6 @@ class _DictViewState extends State<DictView> {
       result[currentWord]?.add(currentSentence);
     }
 
-    //print('result: ${result.keys}');
     return result;
   }
 
