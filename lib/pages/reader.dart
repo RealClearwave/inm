@@ -208,6 +208,12 @@ class _ReaderPageState extends State<ReaderPage> {
         title: _fileOpened?Text('読み ( $_currentPage / $_totalPages )'):const Text("読み"),
         backgroundColor: Colors.grey.shade50,
         foregroundColor: Colors.pink.shade300,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.more_vert),
+            onPressed: _showPageSlider,  // 点击时显示滑动条
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -276,4 +282,83 @@ class _ReaderPageState extends State<ReaderPage> {
       ],
     );
   }
+
+  // Function to show the bottom slider for adjusting the page with an option to enter a page number
+void _showPageSlider() {
+  showModalBottomSheet(
+    context: context,
+    builder: (context) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: GestureDetector(
+              onTap: () {
+                _showPageInputDialog();  // 弹出页码输入对话框
+              },
+              child: const Text('调整页码', style: TextStyle(fontSize: 18, color: Colors.pink)),
+            ),
+          ),
+          Slider(
+            min: 1,
+            max: _totalPages.toDouble(),
+            value: _currentPage.toDouble(),
+            onChanged: (value) {
+              setState(() {
+                _currentPage = value.toInt();
+              });
+              _pageController.jumpToPage(_currentPage - 1);  // 页码从0开始
+            },
+            divisions: _totalPages,
+            label: '$_currentPage / $_totalPages',
+          ),
+
+          const SizedBox(height: 16),
+        ],
+      );
+    },
+  );
+}
+
+// Function to show a dialog for entering a page number
+void _showPageInputDialog() {
+  showDialog(
+    context: context,
+    builder: (context) {
+      TextEditingController pageController = TextEditingController();
+
+      return AlertDialog(
+        title: const Text('输入页码'),
+        content: TextField(
+          controller: pageController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(hintText: '输入页码 (1 - 总页数)'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();  // 关闭对话框
+            },
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () {
+              int? inputPage = int.tryParse(pageController.text);
+              if (inputPage != null && inputPage >= 1 && inputPage <= _totalPages) {
+                _pageController.jumpToPage(inputPage - 1);  // 页码从0开始，所以减1
+                setState(() {
+                  _currentPage = inputPage;
+                });
+              }
+              Navigator.of(context).pop();  // 关闭对话框
+            },
+            child: const Text('跳转'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
 }
